@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClassName = 'org.example.Main'
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation 'org.aspectj:aspectjrt:1.9.9'
+    implementation 'org.aspectj:aspectjweaver:1.9.9'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Task to configure JVM arguments for the run task
+tasks.withType(JavaExec) {
+    doFirst {
+        // Ensure the AspectJ weaver agent is included
+        def aspectjWeaver = configurations.runtimeClasspath.files.find { it.name.contains('aspectjweaver') }
+        if (aspectjWeaver) {
+            jvmArgs += [
+                    "-javaagent:${aspectjWeaver.absolutePath}",
+                    "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+                    "-Daj.weaving.verbose=true"
+            ]
+        }
+        println "Classpath: ${classpath.asPath}"
+    }
+}
